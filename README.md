@@ -1,149 +1,198 @@
-# Simple Genetic Algorithm on Python
-This project to show the genetic algorithm process in python
+# 🧬 Simple Genetic Algorithm in Python
 
-Why python? cos I love it
+This project demonstrates how to implement a **Genetic Algorithm (GA)** from scratch in Python — a fun way to mimic natural selection and evolve solutions. The goal is to guess a target string using random populations, fitness evaluation, selection, crossover, mutation, and population regeneration.
 
-hate python? its your problem :P
+> Why Python? Because I love it.  
+> Hate Python? That's your problem 😛
 
-## Requirement
-```
+---
+
+## 📦 Requirements
+
+Make sure to install the only dependency:
+
+```bash
 pip install numpy
 ```
 
-## Explanation of Algorithm
-Flowchart of GA
+---
 
-![Flowchart of GA](https://cdn-images-1.medium.com/max/1600/1*HP8JVxlJtOv14rGLJfXEzA.png)
+## 📊 Genetic Algorithm Flow
+
+A Genetic Algorithm simulates the process of natural evolution to solve optimization problems. The main components are:
+
+1. **Initialization** – Create a random population of possible solutions (strings).
+2. **Selection** – Pick the fittest individuals from the population.
+3. **Crossover** – Combine parts of parents to produce offspring.
+4. **Mutation** – Randomly tweak offspring to introduce diversity.
+5. **Evaluation** – Stop if the target is reached or continue to next generation.
+6. **Regeneration** – Replace the worst individuals with new ones.
+
+### 🧭 Flowchart Overview
+
+![GA Flowchart](https://cdn-images-1.medium.com/max/1600/1*HP8JVxlJtOv14rGLJfXEzA.png)
+
+---
+
+## 🔧 Step-by-Step Implementation
 
 ### 1. Initialize Population
-> What is population? Population is a collection of genes
 
-> What is gen? its an individual in the population
+A **population** is a collection of individuals, called **genes**. Each gene is a random string.
 
-for simple explanation, I have an example :
-``` 
-gen = 'Hello World!'
-Population = ('Hello World!', 'Hello Wordd!', 'Hello Morth!')
-```
-so how to create or initialize population? just create random gen and collect it save it in a variable. This is the code how to generate new random gen and collect it into a population. The datatype of population is a dict, for matlab just use struct. Before save it into a population we need to calculate the fitness between a gen with the target. If a gen is match with the target, the value of fitness is 100. So in the population we will a pair of gen and its fitness
-```
-# generate new gen
+```python
 def create_gen(panjang_target):
     random_number = np.random.randint(32, 126, size=panjang_target)
-    gen = ''.join([chr(i) for i in random_number])
-    return gen
+    return ''.join([chr(i) for i in random_number])
+```
 
-# calculate fitness of gen
+Each gene’s fitness is evaluated against the target string.
+
+```python
 def calculate_fitness(gen, target, panjang_target):
-    fitness = 0
-    for i in range (panjang_target):
-        if gen[i:i+1] == target[i:i+1]:
-            fitness += 1
-    fitness = fitness / panjang_target * 100
-    return fitness
+    matches = sum([1 for i in range(panjang_target) if gen[i] == target[i]])
+    return (matches / panjang_target) * 100
+```
 
-# create population
+All genes are stored with their fitness in a dictionary:
+
+```python
 def create_population(target, max_population, panjang_target):
     populasi = {}
-    for i in range(max_population):
+    for _ in range(max_population):
         gen = create_gen(panjang_target)
-        genfitness = calculate_fitness(gen, target, panjang_target)
-        populasi[gen] =  genfitness
+        populasi[gen] = calculate_fitness(gen, target, panjang_target)
     return populasi
 ```
 
+---
+
 ### 2. Selection
 
-> Selection is a process to choose 2 best from a population
+Choose the two best genes (with the highest fitness values):
 
-How to choose it? just check the fitness of each gen and choose 2 biggest in a population
-
-```
-# selection process
+```python
 def selection(populasi):
     pop = dict(populasi)
     parent = {}
-    for i in range(2):
+    for _ in range(2):
         gen = max(pop, key=pop.get)
-        genfitness = pop[gen]
-        parent[gen] = genfitness
-        if i == 0:
-            del pop[gen]
+        parent[gen] = pop[gen]
+        del pop[gen]
     return parent
 ```
 
+---
+
 ### 3. Crossover
 
-> crossover is doing sexual activities between 2 parent which choosen in selection process
+Mix the selected parents to create two children by swapping halves:
 
-In this code, crossover process is making process like this :
-```
-parent1 = 'abcde12345'
-parent2 = '12345abcde'
-
-offspring1 = 'abcdeabcde'
-offspring2 = '1234512345'
-```
-
-the idea is getting last half total character from parent1 and combine with first half total character from parent2 and vice versa. The full code of this process is like this
-
-```
-# crossover
+```python
 def crossover(parent, target, panjang_target):
-    child = {}
-    cp = round(len(list(parent)[0])/2)
-    for i in range(2):
-        gen = list(parent)[i][:cp] + list(parent)[1-i][cp:]
-        genfitness = calculate_fitness(gen, target, panjang_target)
-        child[gen] = genfitness
-    return child
- ```
+    cp = round(panjang_target / 2)
+    p = list(parent)
+    return {
+        p[0][:cp] + p[1][cp:]: calculate_fitness(p[0][:cp] + p[1][cp:], target, panjang_target),
+        p[1][:cp] + p[0][cp:]: calculate_fitness(p[1][:cp] + p[0][cp:], target, panjang_target)
+    }
+```
+
+---
 
 ### 4. Mutation
 
-> mutation process is genetic operator used to maintain genetic diversity from one generation of a population of genetic algorithm chromosomes to the next
+Introduce diversity by randomly changing characters with a certain mutation rate:
 
-the idea is we need to choose mutation rate, and looping for every character in a gen to get random number. If the random number is bigger than mutation rate, in that looping character will be replaced with random character
-
-```
-# mutation
+```python
 def mutation(child, target, mutation_rate, panjang_target):
     mutant = {}
-    for i in range(len(child)):     
-        data = list(list(child)[i])
+    for c in child:
+        data = list(c)
         for j in range(len(data)):
-            if np.random.rand(1) <= mutation_rate:
-                ch = chr(np.random.randint(32, 126))
-                data[j] = ch
+            if np.random.rand() <= mutation_rate:
+                data[j] = chr(np.random.randint(32, 126))
         gen = ''.join(data)
-        genfitness = calculate_fitness(gen, target, panjang_target)
-        mutant[gen] = genfitness
+        mutant[gen] = calculate_fitness(gen, target, panjang_target)
     return mutant
 ```
 
-### 5. Evaluation
+---
 
-> evaluation process is check what fitness value
+### 5. Evaluation and Stopping Criteria
 
-if the fitness of mutation process is equal to 100% so the guess is same with target word and the process will be stoped
+Check if the best individual has reached the target (100% fitness):
 
-```
+```python
 if bestfitness(mutant) >= 100:
-        break
+    break
 ```
 
-### 6. Regeneration of Population
+---
 
-> regeneration is insert gen of mutation process into a population
+### 6. Regeneration
 
-in this process, the worst gen in a population will be dropped and replace with new gen from mutation process
+Replace the weakest genes in the population with the newly mutated ones:
 
-```
-# create new population with new best gen
+```python
 def regeneration(mutant, populasi):
-    for i in range(len(mutant)):
+    for _ in mutant:
         bad_gen = min(populasi, key=populasi.get)
         del populasi[bad_gen]
     populasi.update(mutant)
     return populasi
 ```
+
+---
+
+## 🧪 Example Output
+
+```txt
+Target Word : Hello World!
+Max Population : 10
+Mutation Rate : 0.2
+----------------------------------------------
+The Best        Fitness     Time
+----------------------------------------------
+HgUewI]W*f`     15.38%      0:00:00.003001
+Helpo Worsd!    84.61%      0:00:01.003120
+Hello World!    100.0%      0:00:01.994801
+```
+
+---
+
+## ▶️ Run the Program
+
+```bash
+python genetic_algorithm.py
+```
+
+Edit the config at the top of the file:
+
+```python
+target = 'Hello World!'
+max_population = 10
+mutation_rate = 0.2
+```
+
+---
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🙋‍♂️ Author
+
+**Ardy Seto Priambodo**
+📧 [2black0@gmail.com](mailto:2black0@gmail.com)
+🌐 [http://robot-terbang.web.id](http://robot-terbang.web.id)
+🔗 [@robot\_terbang Telegram Group](http://t.me/robot_terbang)
+
+---
+
+## 📚 References
+
+* Goldberg, D. E., *Genetic Algorithms in Search, Optimization, and Machine Learning*
+* Mitchell, M., *An Introduction to Genetic Algorithms*
