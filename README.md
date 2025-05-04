@@ -187,8 +187,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 **Ardy Seto Priambodo**
 📧 [2black0@gmail.com](mailto:2black0@gmail.com)
-🌐 [http://robot-terbang.web.id](http://robot-terbang.web.id)
-🔗 [@robot\_terbang Telegram Group](http://t.me/robot_terbang)
 
 ---
 
